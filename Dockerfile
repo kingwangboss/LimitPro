@@ -7,6 +7,7 @@ WORKDIR /app
 # 设置环境变量
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH=/app
 
 # 安装系统依赖
 RUN apt-get update \
@@ -24,11 +25,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制项目文件
 COPY src/ ./src/
 
-# 设置工作目录为src
-WORKDIR /app/src
+# 保持工作目录在/app
+# 不要切换到/app/src
 
 # 暴露端口
 EXPOSE 5555
 
 # 启动命令
-CMD ["python", "app.py"] 
+CMD ["python", "src/app.py"] 
