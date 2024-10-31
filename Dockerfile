@@ -2,7 +2,7 @@
 FROM python:3.9-slim
 
 # 设置工作目录
-WORKDIR /app
+WORKDIR /app/src
 
 # 设置环境变量
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -23,16 +23,16 @@ RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple \
     && pip install --no-cache-dir --upgrade pip
 
 # 复制requirements.txt
-COPY requirements.txt .
+COPY requirements.txt /app/
 
-# 安装Python依赖（添加超时设置）
-RUN pip install --no-cache-dir -r requirements.txt --timeout 1000
+# 安装Python依赖
+RUN pip install --no-cache-dir -r /app/requirements.txt --timeout 1000
 
 # 复制项目文件
-COPY src/ ./src/
+COPY src/ .
 
 # 暴露端口
 EXPOSE 5555
 
 # 启动命令
-CMD ["python", "src/app.py"] 
+CMD ["python", "app.py"] 

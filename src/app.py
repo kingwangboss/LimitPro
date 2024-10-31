@@ -4,6 +4,7 @@ try:
     from analyzer import LimitPredictor
     from datetime import datetime
     import time
+    import os
 except ImportError as e:
     print(f"导入错误: {str(e)}")
     print("请检查依赖是否正确安装")
@@ -13,9 +14,18 @@ app = Flask(__name__)
 spider = EastMoneySpider()
 predictor = LimitPredictor()
 
+# 添加调试信息
+print(f"当前工作目录: {os.getcwd()}")
+print(f"templates目录: {os.path.exists('templates')}")
+print(f"index.html: {os.path.exists('templates/index.html')}")
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        print(f"渲染模板错误: {str(e)}")
+        return str(e), 500
 
 @app.route('/api/stocks')
 def get_stocks():
@@ -59,4 +69,4 @@ def get_stocks():
         })
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5555) 
+    app.run(debug=True, port=5555, host='0.0.0.0') 
