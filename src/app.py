@@ -1,8 +1,13 @@
-from flask import Flask, render_template, jsonify
-from crawler import EastMoneySpider
-from analyzer import LimitPredictor
-from datetime import datetime
-import time
+try:
+    from flask import Flask, render_template, jsonify
+    from crawler import EastMoneySpider
+    from analyzer import LimitPredictor
+    from datetime import datetime
+    import time
+except ImportError as e:
+    print(f"导入错误: {str(e)}")
+    print("请检查依赖是否正确安装")
+    exit(1)
 
 app = Flask(__name__)
 spider = EastMoneySpider()
