@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        - PYPI_MIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
+    container_name: limitpro_web
+    command: python web_start.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - TZ=Asia/Shanghai
+      - PYTHONUNBUFFERED=1
+    restart: always
+    networks:
+      - limitpro_network
+
+  crawler:
+    build:
+      context: .
+      args:
+        - PYPI_MIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
+    container_name: limitpro_crawler
+    command: python crawler_start.py
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - TZ=Asia/Shanghai
+      - PYTHONUNBUFFERED=1
+    restart: always
+    networks:
+      - limitpro_network
+
+networks:
+  limitpro_network:
+    driver: bridge 
