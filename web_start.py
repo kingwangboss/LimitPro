@@ -3,14 +3,14 @@ from datetime import datetime, timedelta
 import pymongo
 from flask_cors import CORS
 from app.models.mongodb import MongoDBClient
-from app.config.settings import MONGODB_URI, MONGODB_DB, MONGODB_COLLECTION
+from app.config.settings import MONGODB_URI, MONGODB_DB, MONGODB_COLLECTION, STOCK_API_URL
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', stock_api_url=STOCK_API_URL)
 
 @app.route('/api/stocks')
 def get_stocks():

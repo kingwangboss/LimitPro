@@ -233,8 +233,11 @@
     <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
     <script>
+        // 从Flask模板获取配置
+        const STOCK_API_URL = "{{ stock_api_url }}";
+        
         $(document).ready(function() {
-            $.get('/api/stocks', function(response) {
+            $.get(STOCK_API_URL, function(response) {
                 if (response.status === 'success') {
                     $('#date').text(response.date + ' 分析结果');
                     const tbody = $('#stockBody');
