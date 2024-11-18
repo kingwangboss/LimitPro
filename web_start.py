@@ -8,6 +8,21 @@ from app.config.settings import MONGODB_URI, MONGODB_DB, MONGODB_COLLECTION, STO
 app = Flask(__name__)
 CORS(app)
 
+def get_target_date():
+    """根据当前时间确定要获取的数据日期"""
+    now = datetime.now()
+    current_time = now.time()
+    cutoff_time = datetime.strptime("16:30", "%H:%M").time()
+    
+    # 如果当前时间在16:30之前，返回昨天的日期
+    if current_time < cutoff_time:
+        target_date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+        print(f"获取昨天的数据，日期：{target_date}")
+    else:
+        target_date = now.strftime("%Y-%m-%d")
+        print(f"获取今天的数据，日期：{target_date}")
+    return target_date
+
 @app.route('/')
 def index():
     return render_template('index.html', stock_api_url=STOCK_API_URL)
@@ -16,8 +31,8 @@ def index():
 def get_stocks():
     try:
         mongo_client = MongoDBClient()
-        yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-        data = mongo_client.get_data_by_date(yesterday)
+        target_date = get_target_date()
+        data = mongo_client.get_data_by_date(target_date)
         
         if data:
             return jsonify({
@@ -27,7 +42,7 @@ def get_stocks():
             })
         return jsonify({
             'status': 'error',
-            'message': 'No data found for yesterday'
+            'message': f'No data found for date: {target_date}'
         })
     except Exception as e:
         return jsonify({
