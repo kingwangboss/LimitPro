@@ -17,10 +17,8 @@ def get_target_date():
     # 如果当前时间在16:30之前，返回昨天的日期
     if current_time < cutoff_time:
         target_date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
-        print(f"获取昨天的数据，日期：{target_date}")
     else:
         target_date = now.strftime("%Y-%m-%d")
-        print(f"获取今天的数据，日期：{target_date}")
     return target_date
 
 @app.route('/')
