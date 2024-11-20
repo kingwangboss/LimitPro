@@ -120,6 +120,25 @@
     <script>
         let dataTable;
 
+        // 添加时间转换函数
+        function formatDateTime(utcTimeStr) {
+            if (!utcTimeStr) return '-';
+            // 创建UTC时间对象
+            const utcDate = new Date(utcTimeStr);
+            // 减去8小时，因为数据库存的时间已经是北京时间了
+            const localDate = new Date(utcDate.getTime() - 8 * 60 * 60 * 1000);
+            
+            // 格式化日期时间
+            const year = localDate.getFullYear();
+            const month = String(localDate.getMonth() + 1).padStart(2, '0');
+            const day = String(localDate.getDate()).padStart(2, '0');
+            const hours = String(localDate.getHours()).padStart(2, '0');
+            const minutes = String(localDate.getMinutes()).padStart(2, '0');
+            const seconds = String(localDate.getSeconds()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
         function loadStockData(date) {
             $.get(`/api/stocks/history?date=${date}`, function(response) {
                 if (response.status === 'success') {
@@ -130,9 +149,9 @@
                     const tbody = $('#stockBody');
                     tbody.empty();
                     
-                    // 更新数据信息
-                    const createdAt = new Date(response.created_at).toLocaleString();
-                    const updatedAt = new Date(response.updated_at).toLocaleString();
+                    // 使用新的时间格式化函数
+                    const createdAt = formatDateTime(response.created_at);
+                    const updatedAt = formatDateTime(response.updated_at);
                     $('#dataInfo').text(`数据生成时间: ${createdAt} | 最后更新: ${updatedAt}`);
                     
                     response.stocks.forEach(stock => {

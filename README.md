@@ -17,30 +17,32 @@
 ## 项目结构
 ```
 LimitPro/
-├── crawler_start.py        # 爬虫启动脚本
-├── web_start.py           # Web服务启动脚本
-├── README.md              # 项目说明文档
-├── requirements.txt       # 项目依赖
-├── Dockerfile            # Docker构建文件
-├── docker-compose.yml    # Docker Compose配置
-├── app/
-│   ├── __init__.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── mongodb.py    # MongoDB数据库操作
-│   ├── services/
-│   │   ├── __init__.py
-│   │   └── stock_service.py  # 股票服务逻辑
-│   ├── spiders/
-│   │   ├── __init__.py
-│   │   └── eastmoney.py  # 东方财富爬虫
-│   └── utils/
-│       ├── __init__.py
-│       └── logger.py     # 日志工具
-├── templates/
-│   └── index.html        # 前端页面
-└── logs/                 # 日志目录
-    └── stock_screener.log
+├── app/ # 后端应用
+│ ├── config/ # 配置文件
+│ │ ├── settings.py
+│ │ └── settings.template.py
+│ ├── models/ # 数据库模型
+│ │ └── mongodb.py
+│ ├── services/ # 业务逻辑
+│ │ └── stock_service.py
+│ ├── spiders/ # 爬虫模块
+│ │ └── eastmoney.py
+│ └── utils/ # 工具函数
+│ └── logger.py
+├── static/ # 静态资源
+│ ├── css/ # 样式文件
+│ │ └── common.css
+│ └── js/ # JavaScript文件
+│ └── common.js
+├── templates/ # 模板文件
+│ ├── index.html # 首页
+│ └── history.html # 历史数据页
+├── logs/ # 日志目录
+├── crawler_start.py # 爬虫启动脚本
+├── web_start.py # Web服务启动脚本
+├── requirements.txt # 项目依赖
+├── Dockerfile # Docker构建文件
+└── docker-compose.yml # Docker编排文件
 ```
 
 
