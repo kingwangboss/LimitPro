@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成交量分析</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            font-size: 14px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            max-width: 100%;
+        }
+        .header-section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .stats-card {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+        .number {
+            font-family: monospace;
+            text-align: right;
+            padding-right: 15px !important;
+        }
+        .stock-code {
+            font-family: monospace;
+            color: #333;
+            text-decoration: none;
+            padding-left: 15px !important;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            padding: 12px 15px !important;
+            white-space: nowrap;
+        }
+        .table td {
+            padding: 10px 15px !important;
+            vertical-align: middle;
+        }
+        .table td:first-child {
+            padding-left: 15px !important;
+        }
+        .table td:last-child {
+            padding-right: 15px !important;
+        }
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 15px;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            margin-left: 10px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        @media (max-width: 768px) {
+            body {
+                font-size: 12px;
+            }
+            .container {
+                padding: 15px !important;
+            }
+            .table th, .table td {
+                padding: 8px 10px !important;
+            }
+        }
+        .alert {
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        .alert ul {
+            padding-left: 20px;
+            margin-top: 8px;
+        }
+        .alert li {
+            margin-bottom: 6px;
+            color: #666;
+        }
+        .alert li:last-child {
+            margin-bottom: 0;
+        }
+        .alert-heading {
+            color: #333;
+            font-size: 16px;
+        }
+        .alert h6 {
+            color: #444;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">成交量分析</h4>
+                            <p class="text-muted mb-0" id="date"></p>
+                        </div>
+                        <div>
+                            <a href="/" class="btn btn-outline-secondary btn-sm me-2">
+                                查看涨停分析
+                            </a>
+                            <a href="/volume/history" class="btn btn-outline-secondary btn-sm">
+                                查看历史数据
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="stats-card">
+                                <h6>分析股票数</h6>
+                                <h3 id="totalStocks">-</h3>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stats-card">
+                                <h6>平均涨幅</h6>
+                                <h3 id="avgPercent">-</h3>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stats-card">
+                                <h6>平均量比</h6>
+                                <h3 id="avgVolumeRatio">-</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mb-4">
+            <h5 class="alert-heading mb-3">交易提示</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>买入时机：</h6>
+                    <ul class="mb-0">
+                        <li>每个交易日下午2:30获取推荐股票</li>
+                        <li>推荐股票可以直接买入</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>卖出时机：</h6>
+                    <ul class="mb-0">
+                        <li>第二个交易日早上10:30前卖出</li>
+                        <li>建议设置止损以控制风险</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover" id="stockTable">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>名称</th>
+                        <th>最新价</th>
+                        <th>涨跌幅</th>
+                        <th>换手率</th>
+                        <th>量比</th>
+                        <th>流通市值</th>
+                        <th>成交量</th>
+                    </tr>
+                </thead>
+                <tbody id="stockBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $.get('/api/volume', function(response) {
+                if (response.status === 'success') {
+                    $('#date').text(response.date + ' 分析结果');
+                    const tbody = $('#stockBody');
+                    tbody.empty();
+                    
+                    // 更新统计数据
+                    $('#totalStocks').text(response.stocks.length);
+                    
+                    // 计算平均值
+                    const avgPercent = response.stocks.reduce((sum, stock) => sum + stock.percent, 0) / response.stocks.length;
+                    const avgVolumeRatio = response.stocks.reduce((sum, stock) => sum + stock.volume_ratio, 0) / response.stocks.length;
+                    
+                    $('#avgPercent').text(avgPercent.toFixed(2) + '%');
+                    $('#avgVolumeRatio').text(avgVolumeRatio.toFixed(2));
+                    
+                    response.stocks.forEach(stock => {
+                        const row = $('<tr>');
+                        row.append(`<td><a href="http://quote.eastmoney.com/${stock.code.startsWith('6') ? 'sh' : 'sz'}${stock.code}.html" target="_blank" class="stock-code">${stock.code}</a></td>`);
+                        row.append(`<td>${stock.name}</td>`);
+                        row.append(`<td class="number">${stock.price.toFixed(2)}</td>`);
+                        row.append(`<td class="number">${stock.percent.toFixed(2)}%</td>`);
+                        row.append(`<td class="number">${stock.turnover.toFixed(2)}%</td>`);
+                        row.append(`<td class="number">${stock.volume_ratio.toFixed(2)}</td>`);
+                        row.append(`<td class="number">${stock.market_value.toFixed(2)}亿</td>`);
+                        row.append(`<td class="number">${stock.volume}</td>`);
+                        tbody.append(row);
+                    });
+
+                    $('#stockTable').DataTable({
+                        responsive: true,
+                        language: {
+                            url: '//cdn.datatables.net/plug-ins/1.10.21/i18n/Chinese.json'
+                        },
+                        order: [[5, "desc"]],  // 按量比排序
+                        pageLength: 25,
+                        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                             "<'row'<'col-sm-12'tr>>" +
+                             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                    });
+                } else {
+                    alert('获取数据失败：' + response.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

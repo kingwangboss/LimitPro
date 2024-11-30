@@ -9,7 +9,8 @@ class MongoDBClient:
         try:
             self.client = pymongo.MongoClient(MONGODB_URI)
             self.db = self.client[MONGODB_DB]
-            self.collection = self.db[MONGODB_COLLECTION]
+            self.limit_collection = self.db[MONGODB_COLLECTION]  # 涨停板数据
+            self.volume_collection = self.db['volume_analysis']  # 成交量分析数据
             # 测试连接
             self.client.server_info()
             logging.info("MongoDB connection established")
@@ -17,14 +18,15 @@ class MongoDBClient:
             logging.error(f"MongoDB connection failed: {str(e)}")
             raise
     
-    def update_daily_data(self, data, date):
+    def update_daily_data(self, data, date, collection_type='limit'):
         """更新或插入每日数据"""
         try:
             records = data.to_dict('records') if isinstance(data, pd.DataFrame) else data
-            existing = self.collection.find_one({'date': date})
+            collection = self.limit_collection if collection_type == 'limit' else self.volume_collection
             
+            existing = collection.find_one({'date': date})
             if existing:
-                self.collection.update_one(
+                collection.update_one(
                     {'date': date},
                     {
                         '$set': {
@@ -33,26 +35,27 @@ class MongoDBClient:
                         }
                     }
                 )
-                logging.info(f"Updated data for {date}")
+                logging.info(f"Updated {collection_type} data for {date}")
             else:
-                self.collection.insert_one({
+                collection.insert_one({
                     'date': date,
                     'stocks': records,
                     'created_at': datetime.now(),
                     'updated_at': datetime.now()
                 })
-                logging.info(f"Inserted new data for {date}")
+                logging.info(f"Inserted new {collection_type} data for {date}")
                 
         except Exception as e:
             logging.error(f"MongoDB operation failed: {str(e)}")
             raise
 
-    def get_data_by_date(self, date):
+    def get_data_by_date(self, date, collection_type='limit'):
         """获取指定日期的数据"""
         try:
-            return self.collection.find_one({'date': date})
+            collection = self.limit_collection if collection_type == 'limit' else self.volume_collection
+            return collection.find_one({'date': date})
         except Exception as e:
-            logging.error(f"Failed to get data for date {date}: {str(e)}")
+            logging.error(f"Failed to get {collection_type} data for date {date}: {str(e)}")
             return None
 
     def __del__(self):
