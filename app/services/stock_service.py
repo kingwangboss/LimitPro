@@ -146,7 +146,7 @@ class StockService:
                 # 合并技术分析和API分析结果
                 final_df = pd.merge(tech_df, analyze_df, on=['代码', '名称'], how='inner')
                 
-                # 筛选趋势为上升且可能性>=80%的股票
+                # 筛选趋势为上升且可能性在70-75之间的股票
                 final_df = final_df[
                     (final_df['当前趋势'] == '上升') & 
                     (final_df['出现可能性'].between(70, 75))
@@ -155,7 +155,7 @@ class StockService:
                 if len(final_df) > 0:
                     logging.info(f"\n最终找到 {len(final_df)} 只符合所有条件的股票")
                     current_date = datetime.now().strftime("%Y-%m-%d")
-                    self.mongo_client.update_daily_data(final_df, current_date)
+                    self.mongo_client.update_daily_data(final_df, current_date, 'limit')
                     logging.info(f"数据已保存到数据库，日期：{current_date}")
                 else:
                     logging.info("没有股票同时满足技术指标和趋势分析条件")
