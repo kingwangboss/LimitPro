@@ -149,7 +149,7 @@ class StockService:
                 # 筛选趋势为上升且可能性>=80%的股票
                 final_df = final_df[
                     (final_df['当前趋势'] == '上升') & 
-                    (final_df['出现可能性'] >= 80)
+                    (final_df['出现可能性'].between(70, 75))
                 ]
                 
                 if len(final_df) > 0:
