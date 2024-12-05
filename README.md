@@ -108,6 +108,12 @@ docker compose stop web
 docker compose stop crawler
 ```
 
+3. 更新服务：
+```bash
+# 重新构建并更新
+docker compose up -d --build --force-recreate
+```
+
 ### 2. 直接部署
 
 1. 安装依赖：
