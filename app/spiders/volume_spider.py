@@ -199,20 +199,24 @@ class VolumeSpider:
                         
                         # 判断条件：
                         # 1. 今天的成交量大于昨天
-                        # 2. 今天的成交量是前3天平均值的2倍以上
+                        # 2. 今天的成交量是前3天平均值的1.8倍以上
                         if (today_volume > yesterday_volume and 
-                            today_volume > avg_volume * 2):
+                            today_volume > avg_volume * 1.8):
                             logging.info(f"成交量符合条件：")
                             logging.info(f"今日成交量: {today_volume:.0f}")
                             logging.info(f"昨日成交量: {yesterday_volume:.0f}")
                             logging.info(f"前3天平均: {avg_volume:.0f}")
                             logging.info(f"今日/平均: {(today_volume/avg_volume):.2f}倍")
-                            filtered_stocks.append(row.to_dict())
+                            
+                            # 添加成交量倍数到结果中
+                            stock_data = row.to_dict()
+                            stock_data['volume_times'] = today_volume / avg_volume
+                            filtered_stocks.append(stock_data)
                         else:
                             if today_volume <= yesterday_volume:
                                 logging.info("今日成交量未超过昨日")
-                            if today_volume <= avg_volume * 2:
-                                logging.info(f"今日成交量未达到前3天平均的2倍 (当前: {(today_volume/avg_volume):.2f}倍)")
+                            if today_volume <= avg_volume * 1.8:
+                                logging.info(f"今日成交量未达到前3天平均的1.8倍 (当前: {(today_volume/avg_volume):.2f}倍)")
                     else:
                         logging.info("获取历史数据失败或数据不足")
                 
