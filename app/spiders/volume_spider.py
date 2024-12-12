@@ -154,14 +154,14 @@ class VolumeSpider:
                 logging.info(f"涨跌幅(3-5%): {len(df[df['percent'].between(3, 5)])} 只")
                 logging.info(f"换手率(5-10%): {len(df[df['turnover'].between(5, 10)])} 只")
                 logging.info(f"量比>1: {len(df[df['volume_ratio'] > 1])} 只")
-                logging.info(f"流通市值(50-100亿): {len(df[df['market_value'].between(50, 100)])} 只")
+                logging.info(f"流通市值(30-100亿): {len(df[df['market_value'].between(30, 100)])} 只")
                 
                 # 应用筛选条件
                 df = df[
                     (df['percent'].between(3, 5)) &  # 涨幅3%-5%
                     (df['turnover'].between(5, 10)) &  # 换手率5%-10%
                     (df['volume_ratio'] > 1) &  # 量比大于1
-                    (df['market_value'].between(50, 100))  # 流通市值50-100亿
+                    (df['market_value'].between(30, 100))  # 流通市值30-100亿
                 ]
                 
                 logging.info(f"初步筛选后剩余 {len(df)} 只股票")
