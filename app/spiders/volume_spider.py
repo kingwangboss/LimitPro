@@ -185,7 +185,7 @@ class VolumeSpider:
                 for _, row in sample_stocks.iterrows():
                     logging.info(f"{row['code']} {row['name']} 流通市值: {row['market_value']:.2f}亿")
                 
-                # 打印每个条件筛选后的数据
+                # 打印每��条件筛选后的数据
                 logging.info(f"涨跌幅(3-5%): {len(df[df['percent'].between(3, 5)])} 只")
                 logging.info(f"换手率(5-10%): {len(df[df['turnover'].between(5, 10)])} 只")
                 logging.info(f"量比>1: {len(df[df['volume_ratio'] > 1])} 只")
@@ -246,9 +246,9 @@ class VolumeSpider:
                         
                         # 判断条件：
                         # 1. 今天的成交量大于昨天
-                        # 2. 今天的成交量是前5天平均值的2倍以上
+                        # 2. 今天的成交量是前5天平均值的1.8倍以上
                         if (today_volume > yesterday_volume and 
-                            today_volume > avg_volume * 2):
+                            today_volume > avg_volume * 1.8):
                             logging.info(f"成交量符合条件：")
                             logging.info(f"今日成交量: {today_volume:.0f}")
                             logging.info(f"昨日成交量: {yesterday_volume:.0f}")
@@ -262,8 +262,8 @@ class VolumeSpider:
                         else:
                             if today_volume <= yesterday_volume:
                                 logging.info("今日成交量未超过昨日")
-                            if today_volume <= avg_volume * 2:
-                                logging.info(f"今日成交量未达到前5天平均的2倍 (当前: {(today_volume/avg_volume):.2f}倍)")
+                            if today_volume <= avg_volume * 1.8:
+                                logging.info(f"今日成交量未达到前5天平均的1.8倍 (当前: {(today_volume/avg_volume):.2f}倍)")
                     else:
                         logging.info("获取历史数据失败或数据不足")
                 
