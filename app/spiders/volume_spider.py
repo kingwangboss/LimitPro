@@ -5,6 +5,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import time
 import logging
+import numpy as np
 
 class VolumeSpider:
     def __init__(self):
@@ -36,6 +37,38 @@ class VolumeSpider:
                 time.sleep(2 ** attempt)  # 指数退避
                 continue
 
+    def calculate_rsi(self, prices, periods=5):
+        """计算RSI指标"""
+        try:
+            # 计算价格变化
+            deltas = np.diff(prices)
+            seed = deltas[:periods+1]
+            up = seed[seed >= 0].sum()/periods
+            down = -seed[seed < 0].sum()/periods
+            rs = up/down
+            rsi = np.zeros_like(prices)
+            rsi[:periods] = 100. - 100./(1. + rs)
+
+            # 计算剩余数据的RSI
+            for i in range(periods, len(prices)):
+                delta = deltas[i - 1]
+                if delta > 0:
+                    upval = delta
+                    downval = 0.
+                else:
+                    upval = 0.
+                    downval = -delta
+
+                up = (up * (periods - 1) + upval) / periods
+                down = (down * (periods - 1) + downval) / periods
+                rs = up/down
+                rsi[i] = 100. - 100./(1. + rs)
+
+            return rsi[-1]  # 返回最新的RSI值
+        except Exception as e:
+            logging.error(f"计算RSI时出错: {str(e)}")
+            return None
+
     def get_stock_history(self, stock_code):
         """获取个股历史数据"""
         url = 'http://push2his.eastmoney.com/api/qt/stock/kline/get'
@@ -47,8 +80,8 @@ class VolumeSpider:
             'klt': '101',  # 日线
             'fqt': '1',    # 前复权
             'end': '20500000',
-            'beg': '-5',   # 只获取最近5天数据
-            'lmt': '5'     # 限制返回5条数据
+            'beg': '-10',   # 获取最近10天数据，足够计算RSI(5)和成交量
+            'lmt': '10'     # 限制返回10条数据
         }
         
         try:
@@ -63,9 +96,11 @@ class VolumeSpider:
             
             # 转换数据类型
             df['成交量'] = pd.to_numeric(df['成交量'], errors='coerce')
+            df['收盘'] = pd.to_numeric(df['收盘'], errors='coerce')
             
-            # 打印成交量数据，用于调试
-            logging.info(f"最近5天成交量: {df['成交量'].tolist()}")
+            # 计算RSI
+            rsi = self.calculate_rsi(df['收盘'].values)
+            df['RSI'] = rsi if rsi is not None else None
             
             return df
             
@@ -141,7 +176,7 @@ class VolumeSpider:
                 # 过滤科创板
                 df = df[~df['code'].str.startswith('688')]
                 
-                # 流通市值单位转换（从元转换为亿元）
+                # 流通市值单位转换（从元换为亿元）
                 df['market_value'] = df['market_value'] / 100000000
                 
                 # 打印一些样本数据
@@ -150,18 +185,20 @@ class VolumeSpider:
                 for _, row in sample_stocks.iterrows():
                     logging.info(f"{row['code']} {row['name']} 流通市值: {row['market_value']:.2f}亿")
                 
-                # 打印每个条件筛选后的数量
+                # 打印每个条件筛选后的数据
                 logging.info(f"涨跌幅(3-5%): {len(df[df['percent'].between(3, 5)])} 只")
                 logging.info(f"换手率(5-10%): {len(df[df['turnover'].between(5, 10)])} 只")
                 logging.info(f"量比>1: {len(df[df['volume_ratio'] > 1])} 只")
                 logging.info(f"流通市值(30-100亿): {len(df[df['market_value'].between(30, 100)])} 只")
+                logging.info(f"股价(5-50元): {len(df[df['price'].between(5, 50)])} 只")
                 
                 # 应用筛选条件
                 df = df[
                     (df['percent'].between(3, 5)) &  # 涨幅3%-5%
                     (df['turnover'].between(5, 10)) &  # 换手率5%-10%
                     (df['volume_ratio'] > 1) &  # 量比大于1
-                    (df['market_value'].between(30, 100))  # 流通市值30-100亿
+                    (df['market_value'].between(30, 100)) &  # 流通市值30-100亿
+                    (df['price'].between(5, 50))  # 股价5-50元
                 ]
                 
                 logging.info(f"初步筛选后剩余 {len(df)} 只股票")
@@ -171,10 +208,11 @@ class VolumeSpider:
                     logging.info("\n初步筛选结果:")
                     for _, row in df.iterrows():
                         logging.info(f"{row['code']} {row['name']} "
-                                   f"涨跌幅:{row['percent']:.2f}% "
+                                   f"涨幅:{row['percent']:.2f}% "
                                    f"换手率:{row['turnover']:.2f}% "
                                    f"量比:{row['volume_ratio']:.2f} "
-                                   f"流通市值:{row['market_value']:.2f}亿")
+                                   f"流通市值:{row['market_value']:.2f}亿 "
+                                   f"股价:{row['price']:.2f}元")
                 
                 # 获取历史数据检查成交量趋势
                 filtered_stocks = []
@@ -184,28 +222,37 @@ class VolumeSpider:
                     logging.info(f"\n检查 {code} {name} 的成交量趋势...")
                     hist_data = self.get_stock_history(code)
                     
-                    if hist_data is not None and len(hist_data) >= 5:
-                        # 检查成交量趋势
+                    if hist_data is not None and len(hist_data) >= 10:  # 确保有足够数据
+                        # 先进行 RSI 判断
+                        rsi = hist_data['RSI'].iloc[-1]
+                        if rsi is not None:
+                            logging.info(f"RSI(5): {rsi:.2f}")
+                            if not (40 <= rsi <= 70):
+                                logging.info(f"RSI不在40-70范围内，跳过")
+                                continue
+                        
+                        # 再检查成交量趋势
                         volumes = hist_data['成交量'].tolist()
                         volumes.reverse()  # 反转列表，使其按时间顺序排列
-                        logging.info(f"成交量序列（从前到后）: {volumes}")
+                        if len(volumes) >= 6:  # 确保至少有6天数据
+                            logging.info(f"成交量序列（最近6天）: {volumes[:6]}")  # 只显示最近6天
                         
                         # 计算最近两天的成交量变化
                         today_volume = volumes[0]
                         yesterday_volume = volumes[1]
                         
-                        # 计算前3天的平均成交量
-                        avg_volume = sum(volumes[2:]) / 3
+                        # 计算前5天的平均成交量
+                        avg_volume = sum(volumes[1:6]) / 5  # 使用今天之前的5天数据
                         
                         # 判断条件：
                         # 1. 今天的成交量大于昨天
-                        # 2. 今天的成交量是前3天平均值的1.8倍以上
+                        # 2. 今天的成交量是前5天平均值的2倍以上
                         if (today_volume > yesterday_volume and 
-                            today_volume > avg_volume * 1.8):
+                            today_volume > avg_volume * 2):
                             logging.info(f"成交量符合条件：")
                             logging.info(f"今日成交量: {today_volume:.0f}")
                             logging.info(f"昨日成交量: {yesterday_volume:.0f}")
-                            logging.info(f"前3天平均: {avg_volume:.0f}")
+                            logging.info(f"前5天平均: {avg_volume:.0f}")
                             logging.info(f"今日/平均: {(today_volume/avg_volume):.2f}倍")
                             
                             # 添加成交量倍数到结果中
@@ -215,8 +262,8 @@ class VolumeSpider:
                         else:
                             if today_volume <= yesterday_volume:
                                 logging.info("今日成交量未超过昨日")
-                            if today_volume <= avg_volume * 1.8:
-                                logging.info(f"今日成交量未达到前3天平均的1.8倍 (当前: {(today_volume/avg_volume):.2f}倍)")
+                            if today_volume <= avg_volume * 2:
+                                logging.info(f"今日成交量未达到前5天平均的2倍 (当前: {(today_volume/avg_volume):.2f}倍)")
                     else:
                         logging.info("获取历史数据失败或数据不足")
                 

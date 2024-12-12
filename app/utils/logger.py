@@ -21,9 +21,14 @@ def setup_logger():
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler(log_file, encoding='utf-8'),  # 指定编码为utf-8
-            logging.StreamHandler(sys.stdout)  # 使用stdout而不是stderr
+            logging.FileHandler(log_file, encoding='utf-8'),  # 明确指定编码为utf-8
+            logging.StreamHandler(sys.stdout)  # 控制台输出
         ]
     )
+    
+    # 设置所有 logger 的默认编码为 utf-8
+    for handler in logging.root.handlers:
+        if isinstance(handler, logging.FileHandler):
+            handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', encoding='utf-8'))
     
     logging.info(f"Logger initialized. Log file: {log_file}") 
