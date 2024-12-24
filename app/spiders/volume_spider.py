@@ -141,8 +141,18 @@ class VolumeSpider:
                 # 过滤科创板
                 df = df[~df['code'].str.startswith('688')]
                 
+                # 处理nan值
+                df = df.dropna(subset=['market_value'])
+                logging.info(f"去除无效流通市值后剩余 {len(df)} 只股票")
+                
                 # 流通市值单位转换（从元转换为亿元）
                 df['market_value'] = df['market_value'] / 100000000
+                
+                # 添加调试日志
+                logging.info("\n流通市值检查:")
+                logging.info(f"最小值: {df['market_value'].min():.2f}亿")
+                logging.info(f"最大值: {df['market_value'].max():.2f}亿")
+                logging.info(f"空值数量: {df['market_value'].isna().sum()}")
                 
                 # 打印一些样本数据
                 logging.info("\n流通市值样本数据:")
@@ -151,17 +161,19 @@ class VolumeSpider:
                     logging.info(f"{row['code']} {row['name']} 流通市值: {row['market_value']:.2f}亿")
                 
                 # 打印每个条件筛选后的数量
-                logging.info(f"涨跌幅(3-5%): {len(df[df['percent'].between(3, 5)])} 只")
+                logging.info(f"涨跌幅(2-5%): {len(df[df['percent'].between(2, 5)])} 只")
                 logging.info(f"换手率(5-10%): {len(df[df['turnover'].between(5, 10)])} 只")
                 logging.info(f"量比>1: {len(df[df['volume_ratio'] > 1])} 只")
-                logging.info(f"流通市值(30-100亿): {len(df[df['market_value'].between(30, 100)])} 只")
+                logging.info(f"流通市值(50-200亿): {len(df[df['market_value'].between(50, 200)])} 只")
                 
                 # 应用筛选条件
                 df = df[
-                    (df['percent'].between(3, 5)) &  # 涨幅3%-5%
+                    (df['percent'].between(2, 5)) &  # 涨幅2%-5%
                     (df['turnover'].between(5, 10)) &  # 换手率5%-10%
                     (df['volume_ratio'] > 1) &  # 量比大于1
-                    (df['market_value'].between(30, 100))  # 流通市值30-100亿
+                    (df['market_value'].notna()) &  # 确保流通市值不为nan
+                    (df['market_value'] > 0) &  # 确保流通市值大于0
+                    (df['market_value'].between(50, 200))  # 流通市值50-200亿
                 ]
                 
                 logging.info(f"初步筛选后剩余 {len(df)} 只股票")

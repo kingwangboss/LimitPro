@@ -89,5 +89,33 @@ def get_volume_history():
             'message': str(e)
         })
 
+@app.route('/logs')
+def logs():
+    return render_template('logs.html')
+
+@app.route('/api/logs')
+def get_logs():
+    try:
+        current_date = datetime.now().strftime("%Y%m%d")
+        log_file = os.path.join('logs', f'stock_screener_{current_date}.log')
+        
+        if os.path.exists(log_file):
+            with open(log_file, 'r', encoding='utf-8') as f:
+                log_content = f.read()
+            return jsonify({
+                'status': 'success',
+                'logs': log_content
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': f'No log file found for date: {current_date}'
+            })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True) 
