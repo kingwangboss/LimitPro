@@ -7,6 +7,9 @@ from datetime import datetime
 
 def run_volume_task():
     """执行成交量分析任务"""
+    # 每次执行任务时重新设置日志
+    setup_logger()
+    
     service = VolumeService()
     try:
         print("开始执行成交量分析任务...")
@@ -31,7 +34,7 @@ def is_weekday():
     return datetime.now().weekday() < 5
 
 def main():
-    # 设置日志
+    # 初始设置日志
     setup_logger()
     
     # 设置定时任务
@@ -45,7 +48,7 @@ def main():
     # 运行定时任务
     while True:
         schedule.run_pending()
-        time.sleep(60)
+        time.sleep(30)
 
 if __name__ == "__main__":
     main() 
